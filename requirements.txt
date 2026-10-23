@@ -1,0 +1,14 @@
+# Indoor Drone Vision — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core vision
+opencv-python-headless>=4.10,<6.0
+
+# ONNX Runtime (CPU inference on ARM64)
+onnxruntime>=1.20,<2.0
+
+# Config
+PyYAML>=6.0,<7.0
+
+# NumPy (required by OpenCV and ONNX Runtime, pinned for stability)
+numpy>=2.0,<3.0

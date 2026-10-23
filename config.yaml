@@ -1,0 +1,88 @@
+# Indoor Drone Vision — Configuration
+# Camera, detection, decoupled pipeline, ground-station streaming, and session logging
+
+camera:
+  # V4L2 device path (use device path, not index, for reliability)
+  device: "/dev/video0"
+  # Requested resolution
+  width: 640
+  height: 480
+  # Pixel format: MJPG for lower USB bandwidth, YUYV for raw
+  fourcc: "MJPG"
+  # Target frame rate
+  fps: 30
+  # Backend: V4L2 (200) — do not use auto-detection on Pi
+  backend: 200  # cv2.CAP_V4L2
+
+detector:
+  # Pretrained ONNX model path (INT8 quantized: 254ms / 3.93 FPS, FP32 fallback: 423ms / 2.36 FPS)
+  model_path: "models/ssd_mobilenet_v1_int8.onnx"
+  # Fallback model path: "models/ssd_mobilenet_v1.onnx"
+  # Model input dimensions (native SSD MobileNet v1 is 300x300)
+  input_width: 300
+  input_height: 300
+  # Minimum confidence threshold (0.0 - 1.0)
+  confidence_threshold: 0.50
+  # Secondary non-maximum suppression IoU threshold (0.0 - 1.0)
+  nms_threshold: 0.45
+  # CPU inference thread count (2 threads empirically optimal on Pi 4 Cortex-A72)
+  num_threads: 2
+
+pipeline:
+  # Bounded frame buffer size between capture and inference workers (1 = freshest frame only)
+  max_buffer_size: 1
+  # Discard older unprocessed frames when new camera frames arrive
+  drop_stale_frames: true
+
+server:
+  # Enable Ground-Station Web Dashboard and MJPEG stream
+  enabled: false
+  # Network interface binding:
+  # - "127.0.0.1" (default, localhost only for local testing)
+  # - "0.0.0.0" (all LAN interfaces — trusted local Wi-Fi only, never public internet)
+  host: "127.0.0.1"
+  # Web dashboard TCP port
+  port: 8080
+  # Stream JPEG compression quality (0-100)
+  jpeg_quality: 80
+  # Max stream delivery rate (FPS)
+  stream_max_fps: 25
+
+session_logger:
+  # Enable persistent flight session telemetry and detection event logging
+  enabled: true
+  # Directory for session summaries and CSV detection logs
+  output_dir: "output/sessions"
+  # Periodic flush interval in seconds
+  flush_interval_s: 2.0
+  # Bounded queue size for asynchronous disk writes (drops oldest if backlog)
+  queue_maxsize: 1000
+  # Save individual object detection events to CSV
+  save_detection_csv: true
+  # Save overall session performance, totals, and hardware metrics to JSON
+  save_summary_json: true
+
+capture:
+  # Directory for saved frames and snapshots
+  output_dir: "output"
+  # Snapshot directory for detection outputs (snapshots are optional and disabled by default in continuous runs)
+  snapshot_dir: "output/snapshots"
+  # Save annotated snapshots to disk during continuous detection (disabled by default for privacy & disk savings)
+  save_snapshots: false
+  # Headless test: number of frames to capture and save
+  test_frame_count: 10
+  # JPEG quality for saved frames (0-100)
+  jpeg_quality: 90
+  # How often to log FPS (seconds)
+  fps_report_interval: 5.0
+
+display:
+  # Window name (only used when display is available)
+  window_name: "Indoor Drone Vision"
+  # Attempt to show GUI window (auto-detected if not set)
+  # Set to false to force headless mode
+  headless: true
+
+logging:
+  # Logging level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
